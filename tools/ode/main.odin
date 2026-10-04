@@ -96,5 +96,51 @@ build :: proc() {
 		os.exit(state.exit_code)
 	}
 
+
+	fmt.println("Assembling Cortex-M7 startup...")
+
+	assemble_command := []string{
+		"arm-none-eabi-gcc",
+		"-mcpu=cortex-m7",
+		"-mthumb",
+		"-c",
+		"src/arch/arm/cortex_m7/startup.s",
+		"-o",
+		"build/startup.o",
+	}
+
+
+	assemble_state, assemble_stdout, assemble_stderr, assemble_err :=
+		os.process_exec(
+			os.Process_Desc{
+				command = assemble_command,
+			},
+			context.allocator,
+		)
+
+	defer delete(assemble_stdout)
+	defer delete(assemble_stderr)
+
+	if assemble_err != nil {
+		fmt.eprintf("Failed to run assembler: %v\n", assemble_err)
+		os.exit(1)
+	}
+
+	if len(assemble_stdout) > 0 {
+		fmt.printf("%s", assemble_stdout)
+	}
+
+	if len(assemble_stderr) > 0 {
+		fmt.eprintf("%s", assemble_stderr)
+	}
+
+	if !assemble_state.success {
+		fmt.eprintf(
+			"Assembly failed with exit code %d\n",
+			assemble_state.exit_code,
+		)
+		os.exit(assemble_state.exit_code)
+	}
+
 	fmt.println("Build completed")
 }
