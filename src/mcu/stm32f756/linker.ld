@@ -18,4 +18,11 @@ SECTIONS
         *(.text*)
         *(.rodata*)
     } > FLASH
+
+    .ARM.exidx :
+    {
+        __exidx_start = .;
+        *(.ARM.exidx*)
+        __exidx_end = .;
+    } > FLASH
 }

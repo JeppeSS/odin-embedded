@@ -2,7 +2,8 @@ package main
 
 import "core:fmt"
 import "core:os"
-
+import "core:strings"
+import "core:path/filepath"
 
 main :: proc() {
 	args := os.args
@@ -65,6 +66,7 @@ build :: proc() {
 	    "-no-crt",
 	    "-no-entry-point",
 	    "-no-rtti",
+	    "-disable-unwind",
 	    "-out:build/minimal.o",
 	}
 
@@ -140,6 +142,88 @@ build :: proc() {
 			assemble_state.exit_code,
 		)
 		os.exit(assemble_state.exit_code)
+	}
+
+	entries, err_read_dir := os.read_directory_by_path("build", 0, context.allocator)
+	if err_read_dir != nil {
+	    fmt.eprintf("Failed to read build directory: %v\n", err_read_dir)
+	    os.exit(1)
+	}
+	defer delete(entries)
+
+	object_files := make([dynamic]string)
+	defer delete(object_files)
+
+	for entry in entries {
+    	name := entry.name
+	    if strings.has_prefix(name, "minimal-") &&
+	       strings.has_suffix(name, ".o") {
+			joined, err_join := filepath.join({"build", name})
+			if err_join != nil {
+    			fmt.eprintf("Failed to join file path: %v\n", err_join)
+			}
+	        append(&object_files, joined)
+	    }
+	}
+
+	link_command := make([dynamic]string)
+	defer delete(link_command)
+
+	append(&link_command,
+	    "arm-none-eabi-gcc",
+	    "-mcpu=cortex-m7",
+	    "-mthumb",
+	    "-nostartfiles",
+	    "-T",
+	    "src/mcu/stm32f756/linker.ld",
+	    "-Wl,--gc-sections",
+	    "-Wl,-z,noexecstack",
+	    "build/startup.o",
+	)
+
+	for object_file in object_files {
+    	append(&link_command, object_file)
+	}
+
+	append(&link_command,
+	    "-o",
+	    "build/firmware.elf",
+		"-Wl,-Map=build/firmware.map",
+	    "-lgcc",
+	)
+
+	fmt.println("Linking firmware...")
+
+	link_state, link_stdout, link_stderr, link_err :=
+    os.process_exec(
+        os.Process_Desc{
+            command = link_command[:],
+        },
+        context.allocator,
+    )
+
+	defer delete(link_stdout)
+	defer delete(link_stderr)
+
+	if link_err != nil {
+	    fmt.eprintf("Failed to run linker: %v\n", link_err)
+	    os.exit(1)
+	}
+
+	if len(link_stdout) > 0 {
+	    fmt.printf("%s", link_stdout)
+	}
+
+	if len(link_stderr) > 0 {
+	    fmt.eprintf("%s", link_stderr)
+	}
+
+	if !link_state.success {
+	    fmt.eprintf(
+	        "Linking failed with exit code %d\n",
+	        link_state.exit_code,
+	    )
+	    os.exit(link_state.exit_code)
 	}
 
 	fmt.println("Build completed")

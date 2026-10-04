@@ -25,3 +25,5 @@ Reset_Handler:
     b 1b
 
 .size Reset_Handler, . - Reset_Handler
+
+.section .note.GNU-stack, "", %progbits
