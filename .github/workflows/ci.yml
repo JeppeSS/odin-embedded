@@ -21,7 +21,15 @@ jobs:
             git-lfs \
             gcc-arm-none-eabi
 
+      - name: Cache Odin
+        id: cache-odin
+        uses: actions/cache@v4
+        with:
+          path: ~/Odin
+          key: odin-${{ runner.os }}-${{ hashFiles('.odin-version') }}
+
       - name: Install Odin
+        if: steps.cache-odin.outputs.cache-hit != 'true'
         run: |
           ODIN_VERSION=$(cat .odin-version)
 
@@ -34,7 +42,8 @@ jobs:
           git lfs pull
           make release-native
 
-          echo "$HOME/Odin" >> "$GITHUB_PATH"
+      - name: Add Odin to PATH
+        run: echo "$HOME/Odin" >> "$GITHUB_PATH"
 
       - name: Check Odin version
         run: odin version
