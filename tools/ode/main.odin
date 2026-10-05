@@ -4,7 +4,6 @@ import "core:fmt"
 import "core:os"
 import "core:strings"
 import "core:path/filepath"
-import "core:strconv"
 
 main :: proc() {
 	args := os.args
@@ -23,6 +22,10 @@ main :: proc() {
 
 	case "test":
 		test()
+		break
+
+	case "flash":
+		flash()
 		break
 
 	case "help":
@@ -48,7 +51,8 @@ print_usage :: proc() {
 	fmt.println()
 	fmt.println("Commands:")
 	fmt.println("  build      Build firmware")
-	fmt.println("  test       Test firmware")
+	fmt.println("  flash      Flash firmware")
+	fmt.println("  test       Test project")
 	fmt.println("  help       Show this help")
 	fmt.println("  version    Show version")
 }
@@ -238,4 +242,40 @@ build :: proc() {
 
 test :: proc() {
 	fmt.println("Testing firmware...")
+}
+
+flash :: proc() {
+	fmt.println("Flashing firmware...")
+
+	command := []string{
+		"openocd",
+		"-f",
+		"interface/stlink.cfg",
+		"-f",
+		"target/stm32f7x.cfg",
+		"-c",
+		"program build/firmware.elf verify reset exit",
+	}
+
+	state, stdout, stderr, err := os.process_exec(
+		{
+			command = command,
+		},
+		context.allocator,
+	)
+	defer delete(stdout)
+	defer delete(stderr)
+
+	if err != nil {
+		fmt.eprintln("Failed to start OpenOCD:", err)
+		os.exit(1)
+	}
+
+	if !state.success {
+		fmt.eprintln("Failed to flash firmware:")
+		fmt.eprintln(string(stderr))
+		os.exit(1)
+	}
+
+	fmt.println("Firmware flashed successfully")
 }
