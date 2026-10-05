@@ -1,6 +1,6 @@
 package stm32f756
 
-import "../../mmio"
+import "embedded:mmio"
 
 // RCC_BASE is the base address of the Reset and Clock Control peripheral.
 //

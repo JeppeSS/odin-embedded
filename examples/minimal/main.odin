@@ -1,6 +1,7 @@
 package minimal
 
-import stm32f756 "../../src/mcu/stm32f756"
+import "embedded:mcu/stm32f756"
+
 
 @(export)
 embedded_main :: proc "c" () {

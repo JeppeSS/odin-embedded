@@ -1,6 +1,6 @@
 package stm32f756
 
-import "../../mmio"
+import "embedded:mmio"
 
 // GPIOB_BASE is the base address of GPIO port B.
 //

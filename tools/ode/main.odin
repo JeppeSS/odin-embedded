@@ -77,6 +77,7 @@ build :: proc() {
 	    "-no-entry-point",
 	    "-no-rtti",
 	    "-disable-unwind",
+		"-collection:embedded=src",
 	    "-out:build/minimal.o",
 	}
 
