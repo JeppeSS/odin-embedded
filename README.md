@@ -56,3 +56,65 @@ embedded_main :: proc "c" () {
 
 This example demonstrates the current low-level API directly. Higher-level
 abstractions will only be introduced when concrete use cases justify them.
+
+## Building
+
+`ode` is the command-line tool used to build and flash firmware.
+
+Build `ode` using Odin:
+
+```sh
+mkdir -p bin
+odin build tools/ode -out:bin/ode
+```
+
+Build the example firmware:
+
+```sh
+./bin/ode build
+```
+
+The resulting firmware ELF is written to:
+
+```text
+build/firmware.elf
+```
+
+## Flashing
+
+Firmware can be flashed to the target using:
+
+```sh
+./bin/ode flash
+```
+
+The current flashing implementation uses OpenOCD and ST-LINK.
+
+## Tooling
+
+`ode` is a small build tool for `odin-embedded`.
+
+It currently provides:
+
+```text
+ode build
+ode flash
+```
+
+Additional commands and functionality will be added as they become necessary.
+
+`ode` does not replace the Odin compiler, linker, OpenOCD, or debugger. It
+orchestrates the existing embedded toolchain and provides a consistent workflow
+for projects using `odin-embedded`.
+
+## Status
+
+`odin-embedded` is in early development.
+
+APIs, project structure, and tooling may change as the framework evolves.
+
+## License
+
+`odin-embedded` is licensed under the MIT License.
+
+See [LICENSE](LICENSE) for details.
