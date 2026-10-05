@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            clang \
+            llvm \
+            git-lfs \
+            gcc-arm-none-eabi
+
+      - name: Install Odin
+        run: |
+          ODIN_VERSION=$(cat .odin-version)
+
+          git clone --depth 1 \
+            --branch "$ODIN_VERSION" \
+            https://github.com/odin-lang/Odin.git \
+            "$HOME/Odin"
+
+          cd "$HOME/Odin"
+          git lfs pull
+          make release-native
+
+          echo "$HOME/Odin" >> "$GITHUB_PATH"
+
+      - name: Check Odin version
+        run: odin version
+
+      - name: Build ode
+        run: |
+          mkdir -p bin
+          odin build tools/ode -out:bin/ode
+
+      - name: Build firmware
+        run: ./bin/ode build
+
+      - name: Test firmware
+        run: odin test tests/firmware_validation

@@ -1,15 +1,17 @@
-package main
+package firmware_validation
 
-import "core:fmt"
 import "core:os"
 import "core:strconv"
 import "core:strings"
+import "core:testing"
+
+FIRMWARE_PATH :: "build/firmware.elf"
 
 get_symbol_address :: proc(name: string) -> (uintptr, bool) {
 	command := []string{
 		"arm-none-eabi-nm",
 		"--defined-only",
-		"build/firmware.elf",
+		FIRMWARE_PATH,
 	}
 
 	state, stdout, stderr, err := os.process_exec(
@@ -27,46 +29,35 @@ get_symbol_address :: proc(name: string) -> (uintptr, bool) {
 
 	output := string(stdout)
 
-	for line in strings.split_lines(output) {
+	lines := strings.split_lines(output)
+	defer delete(lines)
+
+	for line in lines {
 		fields := strings.fields(line)
 
-		if len(fields) != 3 {
-			continue
+		if len(fields) == 3 && fields[2] == name {
+			address, ok := strconv.parse_uint(fields[0], 16)
+			delete(fields)
+
+			if !ok {
+				return 0, false
+			}
+
+			return uintptr(address), true
 		}
 
-		if fields[2] != name {
-			continue
-		}
-
-		address, ok := strconv.parse_uint(fields[0], 16)
-		if !ok {
-			return 0, false
-		}
-
-		return uintptr(address), true
+		delete(fields)
 	}
 
 	return 0, false
 }
 
-require_symbol :: proc(name: string) -> uintptr {
-	address, ok := get_symbol_address(name)
-
-	if !ok {
-		fmt.eprintf("Could not find symbol: %s\n", name)
-		os.exit(1)
-	}
-
-	return address
-}
-
-main :: proc() {
-	fmt.println("Validating firmware...")
-
+@(test)
+no_undefined_symbols :: proc(t: ^testing.T) {
 	command := []string{
 		"arm-none-eabi-nm",
 		"-u",
-		"build/firmware.elf",
+		FIRMWARE_PATH,
 	}
 
 	state, stdout, stderr, err := os.process_exec(
@@ -78,54 +69,43 @@ main :: proc() {
 	defer delete(stdout)
 	defer delete(stderr)
 
-	if err != nil {
-		fmt.eprintln("Failed to inspect firmware:", err)
-		os.exit(1)
+	testing.expect(t, err == nil)
+	testing.expect(t, state.success)
+	testing.expect_value(t, len(stdout), 0)
+}
+
+@(test)
+vector_table_address :: proc(t: ^testing.T) {
+	address, ok := get_symbol_address("vector_table")
+
+	testing.expect(t, ok)
+
+	if ok {
+		testing.expect_value(t, address, uintptr(0x08000000))
 	}
+}
 
-	if !state.success {
-		fmt.eprintln("arm-none-eabi-nm failed:")
-		fmt.eprintln(string(stderr))
-		os.exit(1)
+@(test)
+stack_address :: proc(t: ^testing.T) {
+	address, ok := get_symbol_address("_estack")
+
+	testing.expect(t, ok)
+
+	if ok {
+		testing.expect_value(t, address, uintptr(0x20010000))
 	}
+}
 
-	if len(stdout) != 0 {
-		fmt.eprintln("Firmware contains undefined symbols:")
-		fmt.eprintln(string(stdout))
-		os.exit(1)
-	}
+@(test)
+reset_handler_exists :: proc(t: ^testing.T) {
+	_, ok := get_symbol_address("Reset_Handler")
 
-	fmt.println("No undefined symbols")
+	testing.expect(t, ok)
+}
 
-	vector_table := require_symbol("vector_table")
+@(test)
+embedded_main_exists :: proc(t: ^testing.T) {
+	_, ok := get_symbol_address("embedded_main")
 
-	if vector_table != 0x08000000 {
-		fmt.eprintf(
-			"vector_table has incorrect address: 0x%08x\n",
-			vector_table,
-		)
-		os.exit(1)
-	}
-
-	fmt.println("vector_table address is correct")
-
-	estack := require_symbol("_estack")
-
-	if estack != 0x20010000 {
-		fmt.eprintf(
-			"_estack has incorrect address: 0x%08x\n",
-			estack,
-		)
-		os.exit(1)
-	}
-
-	fmt.println("_estack address is correct")
-
-	require_symbol("Reset_Handler")
-	fmt.println("Reset_Handler exists")
-
-	require_symbol("embedded_main")
-	fmt.println("embedded_main exists")
-
-	fmt.println("Firmware validation passed")
+	testing.expect(t, ok)
 }
