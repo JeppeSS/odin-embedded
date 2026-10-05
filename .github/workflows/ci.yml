@@ -56,5 +56,5 @@ jobs:
       - name: Build firmware
         run: ./bin/ode build
 
-      - name: Test firmware
-        run: odin test tests/firmware_validation
+      - name: Hardware-independent tests
+        run: odin test tests -all-packages
