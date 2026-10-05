@@ -57,4 +57,4 @@ jobs:
         run: ./bin/ode build
 
       - name: Hardware-independent tests
-        run: odin test tests -all-packages
+        run: odin test tests -all-packages -collection:embedded=src
