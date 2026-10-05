@@ -4,6 +4,7 @@ import "core:fmt"
 import "core:os"
 import "core:strings"
 import "core:path/filepath"
+import "core:strconv"
 
 main :: proc() {
 	args := os.args
@@ -18,6 +19,10 @@ main :: proc() {
 	switch command {
 	case "build":
 		build()
+		break
+
+	case "test":
+		test()
 		break
 
 	case "help":
@@ -42,7 +47,8 @@ print_usage :: proc() {
 	fmt.println("  ode <command>")
 	fmt.println()
 	fmt.println("Commands:")
- 	fmt.println("  build      Build firmware")
+	fmt.println("  build      Build firmware")
+	fmt.println("  test       Test firmware")
 	fmt.println("  help       Show this help")
 	fmt.println("  version    Show version")
 }
@@ -227,4 +233,9 @@ build :: proc() {
 	}
 
 	fmt.println("Build completed")
+}
+
+
+test :: proc() {
+	fmt.println("Testing firmware...")
 }
