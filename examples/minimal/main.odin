@@ -18,16 +18,12 @@ embedded_main :: proc "c" () {
 		bsrr.BS0 = true
 		stm32f756.write_gpio_b_bsrr(bsrr)
 
-		for _ in 0..<500 {
-			cortex_m7.wait_for_systick()
-		}
+		cortex_m7.wait_for_systick_ticks(500)
 
 		bsrr = stm32f756.GPIO_BSRR_Register{}
 		bsrr.BR0 = true
 		stm32f756.write_gpio_b_bsrr(bsrr)
 
-		for _ in 0..<500 {
-			cortex_m7.wait_for_systick()
-		}
+		cortex_m7.wait_for_systick_ticks(500)
 	}
 }

@@ -198,3 +198,12 @@ wait_for_systick :: proc "contextless" () {
 		}
 	}
 }
+
+// wait_for_systick_ticks waits for the specified number of SysTick periods.
+//
+// The duration of each period depends on the current SysTick configuration.
+wait_for_systick_ticks :: proc "contextless" (ticks: u32) {
+	for _ in 0..<ticks {
+		wait_for_systick()
+	}
+}
