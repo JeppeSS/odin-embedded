@@ -33,3 +33,40 @@ test_reload_value :: proc(t: ^testing.T) {
 
 	testing.expect_value(t, raw, u32(99999))
 }
+
+@(test)
+test_reload_for_16_mhz_1_khz :: proc(t: ^testing.T) {
+	reload, ok := cortex_m7.calculate_systick_reload(16_000_000, 1_000)
+
+	testing.expect_value(t, ok, true)
+	testing.expect_value(t, reload, u32(15_999))
+}
+
+@(test)
+test_reload_for_100_mhz_1_khz :: proc(t: ^testing.T) {
+	reload, ok := cortex_m7.calculate_systick_reload(100_000_000, 1_000)
+
+	testing.expect_value(t, ok, true)
+	testing.expect_value(t, reload, u32(99_999))
+}
+
+@(test)
+test_zero_tick_frequency_is_invalid :: proc(t: ^testing.T) {
+	_, ok := cortex_m7.calculate_systick_reload(16_000_000, 0)
+
+	testing.expect_value(t, ok, false)
+}
+
+@(test)
+test_tick_frequency_above_processor_frequency_is_invalid :: proc(t: ^testing.T) {
+	_, ok := cortex_m7.calculate_systick_reload(1_000, 2_000)
+
+	testing.expect_value(t, ok, false)
+}
+
+@(test)
+test_reload_larger_than_24_bits_is_invalid :: proc(t: ^testing.T) {
+	_, ok := cortex_m7.calculate_systick_reload(200_000_000, 1)
+
+	testing.expect_value(t, ok, false)
+}

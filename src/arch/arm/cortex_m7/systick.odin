@@ -26,6 +26,13 @@ SYST_RVR :: uintptr(0xE000E014)
 // See PM0253, SysTick current value register (SYST_CVR).
 SYST_CVR :: uintptr(0xE000E018)
 
+// SYSTICK_MAX_RELOAD is the maximum value supported by the 24-bit
+// SysTick reload value register.
+//
+// See PM0253, SysTick reload value register (SYST_RVR).
+SYSTICK_MAX_RELOAD :: u32(0x00FF_FFFF)
+
+
 
 // SysTick_Clock_Source specifies the clock used by the SysTick counter.
 //
@@ -111,4 +118,83 @@ read_syst_cvr :: proc "contextless" () -> SYST_CVR_Register {
 // SYST_CSR.COUNTFLAG.
 clear_syst_cvr :: proc "contextless" () {
 	mmio.write_u32(SYST_CVR, 0)
+}
+
+// calculate_systick_reload calculates the SysTick reload value for the requested
+// processor and tick frequencies.
+//
+// Returns false if the requested configuration cannot be represented by the
+// 24-bit SysTick reload register.
+calculate_systick_reload :: proc "contextless" (
+	processor_frequency_hz: u32,
+	tick_frequency_hz: u32
+) -> (reload: u32, ok: bool) {
+	if tick_frequency_hz == 0 {
+		return 0, false
+	}
+
+	cycles_per_tick := processor_frequency_hz / tick_frequency_hz
+
+	if cycles_per_tick == 0 {
+		return 0, false
+	}
+
+	reload = cycles_per_tick - 1
+
+	if reload > SYSTICK_MAX_RELOAD {
+		return 0, false
+	}
+
+	return reload, true
+}
+
+// configure_systick_processor_clock configures and starts SysTick using the processor clock.
+//
+// processor_frequency_hz specifies the frequency of the processor clock.
+// tick_frequency_hz specifies how often SysTick should reach zero.
+//
+// SysTick exceptions are disabled. The counter can be polled using
+// SYST_CSR.COUNTFLAG.
+//
+// Returns false if the requested tick frequency cannot be represented by
+// the 24-bit SysTick reload register.
+configure_systick_processor_clock :: proc "contextless" (
+	processor_frequency_hz: u32,
+	tick_frequency_hz: u32,
+) -> bool {
+
+	reload, ok := calculate_systick_reload(processor_frequency_hz, tick_frequency_hz)
+
+	if !ok {
+		return false
+	}
+
+	rvr := SYST_RVR_Register {}
+	rvr.RELOAD = reload
+	write_syst_rvr(rvr)
+
+	clear_syst_cvr()
+
+	csr := SYST_CSR_Register {}
+	csr.CLKSOURCE = .Processor
+	csr.TICKINT   = false
+	csr.ENABLE    = true
+	write_syst_csr(csr)
+
+	return true
+}
+
+// wait_for_systick waits until the SysTick counter reaches zero.
+//
+// The function polls SYST_CSR.COUNTFLAG and returns when a SysTick
+// period has elapsed.
+//
+// See PM0253, SysTick control and status register (SYST_CSR).
+wait_for_systick :: proc "contextless" () {
+	for {
+		csr := read_syst_csr()
+		if csr.COUNTFLAG {
+			return
+		}
+	}
 }
