@@ -42,6 +42,15 @@ SysTick_Clock_Source :: enum u8 {
 	Processor = 1,
 }
 
+// SysTick_Mode specifies how SysTick events are handled.
+//
+// Polling allows software to observe SYST_CSR.COUNTFLAG.
+// Interrupt enables a SysTick exception whenever the counter reaches zero.
+SysTick_Mode :: enum {
+    Polling,
+    Interrupt,
+}
+
 // SYST_CSR_Register represents the SysTick control and status register.
 //
 // ENABLE starts and stops the counter.
@@ -148,40 +157,45 @@ calculate_systick_reload :: proc "contextless" (
 	return reload, true
 }
 
-// configure_systick_processor_clock configures and starts SysTick using the processor clock.
+// configure_systick_processor_clock configures and starts SysTick using
+// the processor clock.
 //
-// processor_frequency_hz specifies the frequency of the processor clock.
-// tick_frequency_hz specifies how often SysTick should reach zero.
+// processor_frequency_hz specifies the processor clock frequency.
+// tick_frequency_hz specifies the requested SysTick frequency.
+// mode selects polling or interrupt-driven operation.
 //
-// SysTick exceptions are enabled. A SysTick exception is generated
-// whenever the counter reaches zero.
-//
-// Returns false if the requested tick frequency cannot be represented by
+// Returns false if the requested frequency cannot be represented by
 // the 24-bit SysTick reload register.
 configure_systick_processor_clock :: proc "contextless" (
-	processor_frequency_hz: u32,
-	tick_frequency_hz: u32,
+    processor_frequency_hz: u32,
+    tick_frequency_hz: u32,
+    mode: SysTick_Mode,
 ) -> bool {
+    reload, ok := calculate_systick_reload(
+        processor_frequency_hz,
+        tick_frequency_hz,
+    )
 
-	reload, ok := calculate_systick_reload(processor_frequency_hz, tick_frequency_hz)
+    if !ok {
+        return false
+    }
 
-	if !ok {
-		return false
-	}
+    // Stop SysTick before reconfiguring it.
+    csr := SYST_CSR_Register{}
+    write_syst_csr(csr)
 
-	rvr := SYST_RVR_Register {}
-	rvr.RELOAD = reload
-	write_syst_rvr(rvr)
+    rvr := SYST_RVR_Register{}
+    rvr.RELOAD = reload
+    write_syst_rvr(rvr)
 
-	clear_syst_cvr()
+    clear_syst_cvr()
 
-	csr := SYST_CSR_Register {}
-	csr.CLKSOURCE = .Processor
-	csr.TICKINT   = true
-	csr.ENABLE    = true
-	write_syst_csr(csr)
+    csr.CLKSOURCE = .Processor
+    csr.TICKINT = mode == .Interrupt
+    csr.ENABLE = true
+    write_syst_csr(csr)
 
-	return true
+    return true
 }
 
 // wait_for_systick waits until the SysTick counter reaches zero.
