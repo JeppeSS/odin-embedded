@@ -157,6 +157,18 @@ calculate_systick_reload :: proc "contextless" (
 	return reload, true
 }
 
+// make_systick_csr creates the SysTick control register configuration
+// for the specified operating mode.
+make_systick_csr :: proc "contextless" (
+    mode: SysTick_Mode,
+) -> SYST_CSR_Register {
+    csr := SYST_CSR_Register{}
+    csr.CLKSOURCE = .Processor
+    csr.TICKINT = mode == .Interrupt
+    csr.ENABLE = true
+    return csr
+}
+
 // configure_systick_processor_clock configures and starts SysTick using
 // the processor clock.
 //
@@ -190,9 +202,8 @@ configure_systick_processor_clock :: proc "contextless" (
 
     clear_syst_cvr()
 
-    csr.CLKSOURCE = .Processor
-    csr.TICKINT = mode == .Interrupt
-    csr.ENABLE = true
+    // Configure and start SysTick in the requested mode.
+    csr = make_systick_csr(mode)
     write_syst_csr(csr)
 
     return true

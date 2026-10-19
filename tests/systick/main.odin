@@ -70,3 +70,17 @@ test_reload_larger_than_24_bits_is_invalid :: proc(t: ^testing.T) {
 
 	testing.expect_value(t, ok, false)
 }
+
+@(test)
+test_polling_mode_csr :: proc(t: ^testing.T) {
+    csr := cortex_m7.make_systick_csr(.Polling)
+
+    testing.expect_value(t, transmute(u32)csr, u32(0x00000005))
+}
+
+@(test)
+test_interrupt_mode_csr :: proc(t: ^testing.T) {
+    csr := cortex_m7.make_systick_csr(.Interrupt)
+
+    testing.expect_value(t, transmute(u32)csr, u32(0x00000007))
+}
