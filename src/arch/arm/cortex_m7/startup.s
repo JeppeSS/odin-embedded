@@ -10,20 +10,20 @@
 vector_table:
     .word _estack
     .word Reset_Handler
-    .word 0
-    .word 0
-    .word 0
-    .word 0
-    .word 0
-    .word 0
-    .word 0
-    .word 0
-    .word 0
-    .word 0
-    .word 0
-    .word 0
-    .word 0
-    .word SysTick_Handler
+    .word Default_Handler  /* 2  NMI */
+    .word Default_Handler  /* 3  HardFault */
+    .word Default_Handler  /* 4  MemManage */
+    .word Default_Handler  /* 5  BusFault */
+    .word Default_Handler  /* 6  UsageFault */
+    .word 0                /* 7  Reserved */
+    .word 0                /* 8  Reserved */
+    .word 0                /* 9  Reserved */
+    .word 0                /* 10 Reserved */
+    .word Default_Handler  /* 11 SVCall */
+    .word Default_Handler  /* 12 DebugMonitor */
+    .word 0                /* 13 Reserved */
+    .word Default_Handler  /* 14 PendSV */
+    .word SysTick_Handler  /* 15 SysTick */
 
 .size vector_table, . - vector_table
 
@@ -67,5 +67,16 @@ Reset_Handler:
     b 5b
 
 .size Reset_Handler, . - Reset_Handler
+
+.section .text.Default_Handler, "ax", %progbits
+.global Default_Handler
+.type Default_Handler, %function
+.thumb_func
+
+Default_Handler:
+1:
+    b 1b
+
+.size Default_Handler, . - Default_Handler
 
 .section .note.GNU-stack, "", %progbits
