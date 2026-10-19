@@ -153,8 +153,8 @@ calculate_systick_reload :: proc "contextless" (
 // processor_frequency_hz specifies the frequency of the processor clock.
 // tick_frequency_hz specifies how often SysTick should reach zero.
 //
-// SysTick exceptions are disabled. The counter can be polled using
-// SYST_CSR.COUNTFLAG.
+// SysTick exceptions are enabled. A SysTick exception is generated
+// whenever the counter reaches zero.
 //
 // Returns false if the requested tick frequency cannot be represented by
 // the 24-bit SysTick reload register.
@@ -177,7 +177,7 @@ configure_systick_processor_clock :: proc "contextless" (
 
 	csr := SYST_CSR_Register {}
 	csr.CLKSOURCE = .Processor
-	csr.TICKINT   = false
+	csr.TICKINT   = true
 	csr.ENABLE    = true
 	write_syst_csr(csr)
 

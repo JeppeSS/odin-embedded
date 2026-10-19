@@ -9,6 +9,20 @@
 vector_table:
     .word _estack
     .word Reset_Handler
+    .word 0
+    .word 0
+    .word 0
+    .word 0
+    .word 0
+    .word 0
+    .word 0
+    .word 0
+    .word 0
+    .word 0
+    .word 0
+    .word 0
+    .word 0
+    .word SysTick_Handler
 
 .size vector_table, . - vector_table
 
@@ -19,10 +33,22 @@ vector_table:
 .thumb_func
 
 Reset_Handler:
-    bl embedded_main
+    ldr r0, =_sbss
+    ldr r1, =_ebss
+    movs r2, #0
 
 1:
+    cmp r0, r1
+    bhs 2f
+
+    str r2, [r0], #4
     b 1b
+
+2:
+    bl embedded_main
+
+3:
+    b 3b
 
 .size Reset_Handler, . - Reset_Handler
 

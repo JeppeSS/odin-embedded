@@ -11,19 +11,30 @@ embedded_main :: proc "c" () {
 	moder.MODER0 = .Output
 	stm32f756.write_gpio_b_moder(moder)
 
-	cortex_m7.configure_systick_processor_clock(16_000_000, 1_000)
+	// Configure SysTick to generate 1000 interrupts per second.
+	if !cortex_m7.configure_systick_processor_clock(16_000_000, 1_000) {
+		for {}
+	}
+
+	last_tick := cortex_m7.read_systick_ticks()
+	led_on := false
 
 	for {
-		bsrr := stm32f756.GPIO_BSRR_Register{}
-		bsrr.BS0 = true
-		stm32f756.write_gpio_b_bsrr(bsrr)
+		now := cortex_m7.read_systick_ticks()
 
-		cortex_m7.wait_for_systick_ticks(500)
+		if now - last_tick >= 500 {
+		    last_tick = now
+		    led_on = !led_on
 
-		bsrr = stm32f756.GPIO_BSRR_Register{}
-		bsrr.BR0 = true
-		stm32f756.write_gpio_b_bsrr(bsrr)
+		    bsrr := stm32f756.GPIO_BSRR_Register{}
 
-		cortex_m7.wait_for_systick_ticks(500)
+		    if led_on {
+		        bsrr.BS0 = true
+		    } else {
+		        bsrr.BR0 = true
+		    }
+
+		    stm32f756.write_gpio_b_bsrr(bsrr)
+		}
 	}
 }

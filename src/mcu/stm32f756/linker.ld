@@ -25,4 +25,16 @@ SECTIONS
         *(.ARM.exidx*)
         __exidx_end = .;
     } > FLASH
+
+    .bss (NOLOAD) :
+    {
+        . = ALIGN(4);
+        _sbss = .;
+
+        *(.bss*)
+        *(COMMON)
+
+        . = ALIGN(4);
+        _ebss = .;
+    } > DTCM
 }
