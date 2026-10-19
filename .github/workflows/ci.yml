@@ -1,3 +1,4 @@
+
 name: CI
 
 on:
@@ -6,7 +7,7 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout
@@ -26,7 +27,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/Odin
-          key: odin-${{ runner.os }}-${{ hashFiles('.odin-version') }}
+          key: odin-release-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.odin-version') }}
 
       - name: Install Odin
         if: steps.cache-odin.outputs.cache-hit != 'true'
@@ -40,7 +41,7 @@ jobs:
 
           cd "$HOME/Odin"
           git lfs pull
-          make release-native
+          make release
 
       - name: Add Odin to PATH
         run: echo "$HOME/Odin" >> "$GITHUB_PATH"
@@ -57,4 +58,7 @@ jobs:
         run: ./bin/ode build
 
       - name: Hardware-independent tests
-        run: odin test tests -all-packages -collection:embedded=src
+        run: |
+          odin test tests \
+            -all-packages \
+            -collection:embedded=src
