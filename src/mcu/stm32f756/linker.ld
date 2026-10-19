@@ -26,6 +26,19 @@ SECTIONS
         __exidx_end = .;
     } > FLASH
 
+    .data :
+    {
+        . = ALIGN(4);
+        _sdata = .;
+
+        *(.data*)
+
+        . = ALIGN(4);
+        _edata = .;
+    } > DTCM AT > FLASH
+
+    _sidata = LOADADDR(.data);
+
     .bss (NOLOAD) :
     {
         . = ALIGN(4);

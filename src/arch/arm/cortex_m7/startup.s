@@ -1,3 +1,4 @@
+
 .syntax unified
 .cpu cortex-m7
 .thumb
@@ -33,22 +34,37 @@ vector_table:
 .thumb_func
 
 Reset_Handler:
+    /* Copy .data from Flash to DTCM */
+    ldr r0, =_sidata
+    ldr r1, =_sdata
+    ldr r2, =_edata
+
+1:
+    cmp r1, r2
+    bhs 2f
+
+    ldr r3, [r0], #4
+    str r3, [r1], #4
+    b 1b
+
+2:
+    /* Zero-initialize .bss */
     ldr r0, =_sbss
     ldr r1, =_ebss
     movs r2, #0
 
-1:
+3:
     cmp r0, r1
-    bhs 2f
+    bhs 4f
 
     str r2, [r0], #4
-    b 1b
+    b 3b
 
-2:
+4:
     bl embedded_main
 
-3:
-    b 3b
+5:
+    b 5b
 
 .size Reset_Handler, . - Reset_Handler
 
