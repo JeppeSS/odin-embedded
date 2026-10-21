@@ -10,20 +10,20 @@
 vector_table:
     .word _estack
     .word Reset_Handler
-    .word Default_Handler  /* 2  NMI */
-    .word Default_Handler  /* 3  HardFault */
-    .word Default_Handler  /* 4  MemManage */
-    .word Default_Handler  /* 5  BusFault */
-    .word Default_Handler  /* 6  UsageFault */
-    .word 0                /* 7  Reserved */
-    .word 0                /* 8  Reserved */
-    .word 0                /* 9  Reserved */
-    .word 0                /* 10 Reserved */
-    .word Default_Handler  /* 11 SVCall */
-    .word Default_Handler  /* 12 DebugMonitor */
-    .word 0                /* 13 Reserved */
-    .word Default_Handler  /* 14 PendSV */
-    .word SysTick_Handler  /* 15 SysTick */
+    .word Default_Handler    /* 2  NMI */
+    .word HardFault_Handler  /* 3  HardFault */
+    .word Default_Handler    /* 4  MemManage */
+    .word Default_Handler    /* 5  BusFault */
+    .word Default_Handler    /* 6  UsageFault */
+    .word 0                  /* 7  Reserved */
+    .word 0                  /* 8  Reserved */
+    .word 0                  /* 9  Reserved */
+    .word 0                  /* 10 Reserved */
+    .word Default_Handler    /* 11 SVCall */
+    .word Default_Handler    /* 12 DebugMonitor */
+    .word 0                  /* 13 Reserved */
+    .word Default_Handler    /* 14 PendSV */
+    .word SysTick_Handler    /* 15 SysTick */
 
 .size vector_table, . - vector_table
 
@@ -78,5 +78,22 @@ Default_Handler:
     b 1b
 
 .size Default_Handler, . - Default_Handler
+
+.section .text.HardFault_Handler, "ax", %progbits
+.global HardFault_Handler
+.type HardFault_Handler, %function
+.thumb_func
+
+HardFault_Handler:
+    /* Select the stack used before the exception. */
+    tst lr, #4
+    ite eq
+    mrseq r0, msp
+    mrsne r0, psp
+
+    /* Pass the exception stack pointer. */
+    b hardfault_capture
+
+.size HardFault_Handler, . - HardFault_Handler
 
 .section .note.GNU-stack, "", %progbits
