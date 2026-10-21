@@ -2,15 +2,6 @@
 package cortex_m7
 
 import "base:intrinsics"
-import "embedded:mmio"
-
-// System Control Block (SCB) fault status registers.
-// See ARM Cortex-M7 Generic User Guide (PM0253).
-//
-// HFSR reports HardFault-specific conditions.
-// CFSR contains the MemManage, BusFault, and UsageFault status bits.
-SCB_HFSR :: uintptr(0xE000_ED2C)
-SCB_CFSR :: uintptr(0xE000_ED28)
 
 // Exception_Frame represents the basic Cortex-M7 exception stack frame.
 //
@@ -36,18 +27,21 @@ Exception_Frame :: struct {
 
 // Fault_Info contains diagnostic information captured during a HardFault.
 //
-// pc   - Program counter saved on exception entry.
-// lr   - Link register saved on exception entry.
-// hfsr - HardFault Status Register.
-// cfsr - Configurable Fault Status Register.
+// pc    - Program counter saved on exception entry.
+// lr    - Link register saved on exception entry.
+// hfsr  - HardFault Status Register.
+// cfsr  - Configurable Fault Status Register.
+// mmfar - MemManage fault address, valid only if CFSR.MMARVALID is set.
+// bfar  - BusFault address, valid only if CFSR.BFARVALID is set.
 //
-// HFSR and CFSR can be used together to identify the fault category,
-// while PC can be used to locate the relevant instruction in the firmware.
+// Raw register values are preserved for debugger inspection.
 Fault_Info :: struct {
-    pc:   u32,
-    lr:   u32,
-    hfsr: u32,
-    cfsr: u32,
+    pc:    u32,
+    lr:    u32,
+    hfsr:  u32,
+    cfsr:  u32,
+    mmfar: u32,
+    bfar:  u32,
 }
 
 // Last captured HardFault information.
@@ -75,15 +69,27 @@ fault_info: Fault_Info
 // - Does not attempt to clear fault status or resume execution.
 @(export)
 hardfault_capture :: proc "c" (frame: ^Exception_Frame) {
+    hfsr := read_scb_hfsr()
+    cfsr := read_scb_cfsr()
+
     info := Fault_Info{
         pc   = frame.pc,
         lr   = frame.lr,
-        hfsr = mmio.read_u32(SCB_HFSR),
-        cfsr = mmio.read_u32(SCB_CFSR),
+        hfsr = transmute(u32)hfsr,
+        cfsr = transmute(u32)cfsr,
+    }
+
+    // Only capture fault addresses when the corresponding
+    // validity flags indicate that they are meaningful.
+    if cfsr.MMARVALID != 0 {
+        info.mmfar = read_scb_mmfar()
+    }
+
+    if cfsr.BFARVALID != 0 {
+        info.bfar = read_scb_bfar()
     }
 
     intrinsics.volatile_store(&fault_info, info)
 
-    // Remain in the fault handler until the processor is reset.
     for {}
 }
