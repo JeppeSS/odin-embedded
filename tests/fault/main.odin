@@ -1,3 +1,4 @@
+
 package fault_tests
 
 import "core:testing"
@@ -10,25 +11,25 @@ test_exception_frame_layout :: proc(t: ^testing.T) {
     testing.expect_value(
         t,
         size_of(cortex_m7.Exception_Frame),
-        uintptr(32),
+        32,
     )
 
     testing.expect_value(
         t,
         offset_of(cortex_m7.Exception_Frame, lr),
-        uintptr(20),
+        20,
     )
 
     testing.expect_value(
         t,
         offset_of(cortex_m7.Exception_Frame, pc),
-        uintptr(24),
+        24,
     )
 
     testing.expect_value(
         t,
         offset_of(cortex_m7.Exception_Frame, xpsr),
-        uintptr(28),
+        28,
     )
 }
 
@@ -39,30 +40,30 @@ test_fault_info_layout :: proc(t: ^testing.T) {
     testing.expect_value(
         t,
         size_of(cortex_m7.Fault_Info),
-        uintptr(16),
+        16,
     )
 
     testing.expect_value(
         t,
         offset_of(cortex_m7.Fault_Info, pc),
-        uintptr(0),
+        0,
     )
 
     testing.expect_value(
         t,
         offset_of(cortex_m7.Fault_Info, lr),
-        uintptr(4),
+        4,
     )
 
     testing.expect_value(
         t,
         offset_of(cortex_m7.Fault_Info, hfsr),
-        uintptr(8),
+        8,
     )
 
     testing.expect_value(
         t,
         offset_of(cortex_m7.Fault_Info, cfsr),
-        uintptr(12),
+        12,
     )
 }
