@@ -55,7 +55,7 @@ jobs:
           odin build tools/ode -out:bin/ode
 
       - name: Build firmware
-        run: ./bin/ode build
+        run: ./bin/ode build examples/minimal
 
       - name: Hardware-independent tests
         run: |
