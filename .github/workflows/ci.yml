@@ -54,10 +54,13 @@ jobs:
           mkdir -p bin
           odin build tools/ode -out:bin/ode
 
-      - name: Build firmware
+      - name: Build STM32F756 test firmware
+        run: ./bin/ode build tests/fixtures/stm32f756_minimal
+
+      - name: Build examples
         run: ./bin/ode build examples/minimal
 
-      - name: Hardware-independent tests
+      - name: Run tests
         run: |
           odin test tests \
             -all-packages \

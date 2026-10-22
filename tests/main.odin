@@ -1,7 +1,6 @@
 package tests
 
+import "arch"
+import "mcu"
+
 import "firmware_validation"
-import "gpio"
-import "systick"
-import "fault"
-import "usart"

@@ -1,4 +1,4 @@
-package systick_tests
+package cortex_m7_tests
 
 import "core:testing"
 import "embedded:arch/arm/cortex_m7"

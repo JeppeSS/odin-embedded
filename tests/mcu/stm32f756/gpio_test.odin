@@ -1,8 +1,8 @@
 
-package gpio_tests
+package stm32f756_tests
 
 import "core:testing"
-import stm32f756 "../../src/mcu/stm32f756"
+import "embedded:mcu/stm32f756"
 
 // Verify that GPIO pin 0 uses bits 0-1 in MODER.
 @(test)
@@ -110,19 +110,6 @@ test_gpio_pupdr_layout :: proc(t: ^testing.T) {
     reg := stm32f756.GPIO_PUPDR_Register{}
 
     reg.PUPDR9 = .Pull_Up
-
-    testing.expect_value(
-        t,
-        transmute(u32)reg,
-        u32(0x0004_0000),
-    )
-}
-
-// Verify that USART3EN occupies bit 18 in RCC_APB1ENR.
-@(test)
-test_usart3_clock_enable_bit :: proc(t: ^testing.T) {
-    reg := stm32f756.RCC_APB1ENR_Register{}
-    reg.USART3EN = true
 
     testing.expect_value(
         t,

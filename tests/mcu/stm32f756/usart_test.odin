@@ -1,8 +1,8 @@
 
-package usart_tests
+package stm32f756_tests
 
 import "core:testing"
-import stm32f756 "../../src/mcu/stm32f756"
+import "embedded:mcu/stm32f756"
 
 // Verify USART enable and transmitter enable bit positions.
 @(test)
