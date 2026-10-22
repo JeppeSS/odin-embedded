@@ -5,7 +5,7 @@ import "core:strconv"
 import "core:strings"
 import "core:testing"
 
-FIRMWARE_PATH :: "build/firmware.elf"
+FIRMWARE_PATH :: "build/minimal/firmware.elf"
 
 get_symbol_address :: proc(name: string) -> (uintptr, bool) {
 	command := []string{
