@@ -68,6 +68,7 @@ Reset_Handler:
 
 .size Reset_Handler, . - Reset_Handler
 
+
 .section .text.Default_Handler, "ax", %progbits
 .global Default_Handler
 .type Default_Handler, %function
@@ -79,8 +80,19 @@ Default_Handler:
 
 .size Default_Handler, . - Default_Handler
 
+
+/* Default SysTick handler.
+ * Applications may provide their own implementation.
+ */
+.weak SysTick_Handler
+.thumb_set SysTick_Handler, Default_Handler
+
+
+/* Default HardFault handler.
+ * Applications may override HardFault_Handler directly.
+ */
 .section .text.HardFault_Handler, "ax", %progbits
-.global HardFault_Handler
+.weak HardFault_Handler
 .type HardFault_Handler, %function
 .thumb_func
 
@@ -95,5 +107,13 @@ HardFault_Handler:
     b hardfault_capture
 
 .size HardFault_Handler, . - HardFault_Handler
+
+
+/* Default hardfault_capture implementation.
+ * Can be replaced by a strong implementation in Odin.
+ */
+.weak hardfault_capture
+.thumb_set hardfault_capture, Default_Handler
+
 
 .section .note.GNU-stack, "", %progbits
