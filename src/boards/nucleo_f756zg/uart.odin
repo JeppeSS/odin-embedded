@@ -65,3 +65,16 @@ stlink_uart_write_byte :: proc "contextless" (value: u8) {
 stlink_uart_write_bytes :: proc "contextless" (data: []u8) {
     stm32f756.usart_write_bytes(stm32f756.USART3_BASE, data)
 }
+
+// stlink_uart_write_string transmits a string through
+// the ST-LINK Virtual COM Port.
+//
+// The string is transmitted as raw UTF-8 bytes without
+// a null terminator.
+//
+// This function does not allocate memory.
+//
+// init_stlink_uart must be called before using this function.
+stlink_uart_write_string :: proc "contextless" (message: string) {
+    stlink_uart_write_bytes(transmute([]u8)message)
+}

@@ -321,7 +321,6 @@ write_gpio_ospeedr :: proc "contextless" (base: uintptr, reg: GPIO_OSPEEDR_Regis
 
 // ========================================================================================
 
-
 // GPIO_Pull specifies the internal pull resistor configuration.
 //
 // Pull-up biases an undriven pin toward the supply voltage.
